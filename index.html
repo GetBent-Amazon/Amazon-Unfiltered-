@@ -161,5 +161,39 @@ footer {
   console.log("Amazon Unfiltered database connected!");
 </script>
 
+<button id="test-db" type="button"
+  style="display:block;margin:20px auto;">
+  Test Database Connection
+</button>
+
+<p id="db-result" style="text-align:center;"
+  role="status"></p>
+
+<script>
+document.getElementById("test-db").addEventListener(
+  "click",
+  async function () {
+    const result = document.getElementById("db-result");
+    result.textContent = "Testing connection...";
+
+    try {
+      const { data, error } = await db
+        .from("posts")
+        .select("id")
+        .limit(1);
+
+      if (error) {
+        result.textContent = "Database error: " + error.message;
+      } else {
+        result.textContent =
+          "SUCCESS! Database connected and responding.";
+      }
+    } catch (err) {
+      result.textContent = "Connection failed: " + err.message;
+    }
+  }
+);
+</script>
+
 </body>
 </html>
