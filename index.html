@@ -142,6 +142,36 @@ footer {
     threats, or harassment. Criticism and respectful
     disagreement are welcome.</p>
   </section>
+  
+<section id="members" class="card" style="margin-top:30px;">
+  <h2>Member Access</h2>
+  <p>Join Amazon Unfiltered to participate in discussions.</p>
+
+  <div id="auth-form">
+    <label for="member-email">Email Address</label>
+    <input id="member-email" type="email"
+      placeholder="Enter your email"
+      autocomplete="email"
+      style="display:block;width:100%;padding:12px;margin:10px 0;">
+
+    <label for="member-password">Password</label>
+    <input id="member-password" type="password"
+      placeholder="Enter your password"
+      autocomplete="current-password"
+      style="display:block;width:100%;padding:12px;margin:10px 0;">
+
+    <button type="button" onclick="signUp()">Sign Up</button>
+    <button type="button" onclick="logIn()">Log In</button>
+  </div>
+
+  <div id="member-panel" style="display:none;">
+    <p id="member-welcome"></p>
+    <button type="button" onclick="logOut()">Log Out</button>
+  </div>
+
+  <p id="auth-message" role="status"></p>
+</section>
+
 </main>
 
 <footer>
@@ -193,6 +223,80 @@ document.getElementById("test-db").addEventListener(
     }
   }
 );
+</script>
+
+
+<script>
+async function signUp() {
+  const email = document.getElementById("member-email").value.trim();
+  const password = document.getElementById("member-password").value;
+  const message = document.getElementById("auth-message");
+
+  if (!email || password.length < 8) {
+    message.textContent =
+      "Enter an email and password of at least 8 characters.";
+    return;
+  }
+
+  const { error } = await db.auth.signUp({
+    email,
+    password
+  });
+
+  message.textContent = error
+    ? error.message
+    : "Check your email for a confirmation link!";
+}
+
+async function logIn() {
+  const email = document.getElementById("member-email").value.trim();
+  const password = document.getElementById("member-password").value;
+  const message = document.getElementById("auth-message");
+
+  const { error } = await db.auth.signInWithPassword({
+    email,
+    password
+  });
+
+  if (error) {
+    message.textContent = error.message;
+  } else {
+    message.textContent = "Login successful!";
+    updateMemberPanel();
+  }
+}
+
+async function logOut() {
+  const { error } = await db.auth.signOut();
+
+  if (error) {
+    document.getElementById("auth-message").textContent =
+      error.message;
+    return;
+  }
+
+  updateMemberPanel();
+}
+
+async function updateMemberPanel() {
+  const { data, error } = await db.auth.getUser();
+  const user = error ? null : data.user;
+
+  document.getElementById("auth-form").style.display =
+    user ? "none" : "block";
+
+  document.getElementById("member-panel").style.display =
+    user ? "block" : "none";
+
+  document.getElementById("member-welcome").textContent =
+    user ? "Signed in as " + user.email : "";
+}
+
+db.auth.onAuthStateChange(() => {
+  setTimeout(updateMemberPanel, 0);
+});
+
+updateMemberPanel();
 </script>
 
 </body>
