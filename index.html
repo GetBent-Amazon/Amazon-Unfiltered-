@@ -178,6 +178,35 @@ footer {
   <p id="auth-message" role="status"></p>
 </section>
 
+
+<section id="create-post" class="card" style="margin-top:30px; display:none;">
+  <h2>Create a Discussion Post</h2>
+  <p>Share your experiences, questions, or opinions.</p>
+
+  <label for="post-category">Discussion Category</label>
+  <select id="post-category" style="display:block;width:100%;padding:12px;margin:10px 0;">
+    <option value="Leadership & Management">Leadership & Management</option>
+    <option value="Promotions & Career Growth">Promotions & Career Growth</option>
+    <option value="Safety & Working Conditions">Safety & Working Conditions</option>
+    <option value="Pay, Benefits & Scheduling">Pay, Benefits & Scheduling</option>
+    <option value="Employee Stories">Employee Stories</option>
+    <option value="The Break Room">The Break Room</option>
+  </select>
+
+  <label for="post-title">Post Title</label>
+  <input id="post-title" type="text" maxlength="150"
+    placeholder="Give your post a title"
+    style="display:block;width:100%;padding:12px;margin:10px 0;">
+
+  <label for="post-content">Your Post</label>
+  <textarea id="post-content" maxlength="10000" rows="6"
+    placeholder="What's on your mind?"
+    style="display:block;width:100%;padding:12px;margin:10px 0;"></textarea>
+
+  <button type="button" onclick="createPost()">Publish Post</button>
+  <p id="post-message" role="status"></p>
+</section>
+
 </main>
 
 <footer>
@@ -294,6 +323,9 @@ async function updateMemberPanel() {
   document.getElementById("member-panel").style.display =
     user ? "block" : "none";
 
+document.getElementById("create-post").style.display =
+  user ? "block" : "none";
+
   document.getElementById("member-welcome").textContent =
     user ? "Signed in as " + user.email : "";
 }
@@ -338,6 +370,51 @@ async function saveUsername() {
   }
 
   message.textContent = "Screen name saved successfully!";
+}
+</script>
+
+
+<script>
+async function createPost() {
+  const message = document.getElementById("post-message");
+  const category = document.getElementById("post-category").value;
+  const title = document.getElementById("post-title").value.trim();
+  const content = document.getElementById("post-content").value.trim();
+
+  if (title.length < 3 || title.length > 150) {
+    message.textContent = "Title must be 3–150 characters.";
+    return;
+  }
+
+  if (content.length < 1 || content.length > 10000) {
+    message.textContent = "Post must be 1–10,000 characters.";
+    return;
+  }
+
+  const { data: { user }, error: authError } = await db.auth.getUser();
+
+  if (authError || !user) {
+    message.textContent = "Please log in to publish.";
+    return;
+  }
+
+  message.textContent = "Publishing...";
+
+  const { error } = await db.from("posts").insert({
+    user_id: user.id,
+    category: category,
+    title: title,
+    content: content
+  });
+
+  if (error) {
+    message.textContent = "Could not publish: " + error.message;
+    return;
+  }
+
+  document.getElementById("post-title").value = "";
+  document.getElementById("post-content").value = "";
+  message.textContent = "Your post was published successfully!";
 }
 </script>
 
