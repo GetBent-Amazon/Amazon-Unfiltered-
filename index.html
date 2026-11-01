@@ -166,6 +166,12 @@ footer {
 
   <div id="member-panel" style="display:none;">
     <p id="member-welcome"></p>
+    
+<input id="username" type="text" maxlength="25"
+  placeholder="Choose your public screen name">
+<button type="button" onclick="saveUsername()">Save Screen Name</button>
+<p id="username-message" role="status"></p>
+
     <button type="button" onclick="logOut()">Log Out</button>
   </div>
 
@@ -297,6 +303,42 @@ db.auth.onAuthStateChange(() => {
 });
 
 updateMemberPanel();
+</script>
+
+
+<script>
+async function saveUsername() {
+  const username = document.getElementById("username").value.trim();
+  const message = document.getElementById("username-message");
+
+  if (!/^[a-zA-Z0-9_]{3,25}$/.test(username)) {
+    message.textContent = "Use 3–25 letters, numbers, or underscores.";
+    return;
+  }
+
+  const { data: { user }, error: authError } = await db.auth.getUser();
+
+  if (authError || !user) {
+    message.textContent = "Please log in first.";
+    return;
+  }
+
+  message.textContent = "Saving...";
+
+  const { error } = await db.from("profiles").upsert({
+    id: user.id,
+    username: username
+  }, { onConflict: "id" });
+
+  if (error) {
+    message.textContent = error.code === "23505"
+      ? "That screen name is already taken. Try another."
+      : "Could not save: " + error.message;
+    return;
+  }
+
+  message.textContent = "Screen name saved successfully!";
+}
 </script>
 
 </body>
